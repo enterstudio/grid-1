@@ -7,6 +7,7 @@ import com.gu.mediaservice.model._
 import com.gu.mediaservice.model.usage.PublishedUsageStatus
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http._
+import com.whisk.docker.{DockerContainer, DockerReadyChecker}
 import lib.elasticsearch.{AggregateSearchParams, ElasticSearchTestBase, SearchParams}
 import lib.{MediaApiConfig, MediaApiMetrics}
 import net.logstash.logback.marker.LogstashMarker
@@ -20,7 +21,6 @@ import play.api.mvc.AnyContent
 import play.api.mvc.Security.AuthenticatedRequest
 
 import scala.collection.JavaConverters._
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
@@ -40,22 +40,28 @@ class MediaApiElasticSearch6Test extends ElasticSearchTestBase with Eventually w
   private val ES = new ElasticSearch(mediaApiConfig, mediaApiMetrics, elasticConfig)
   val client = ElasticClient(ElasticProperties("http://" + "localhost" + ":" + 9206)) // TODO obtain from ES6 instance
 
+  def esContainer = Some(DockerContainer("docker.elastic.co/elasticsearch/elasticsearch:6.6.0")
+    .withPorts(9200 -> Some(9206))
+    .withEnv("cluster.name=media-service", "xpack.security.enabled=false", "discovery.type=single-node", "network.host=0.0.0.0")
+    .withReadyChecker(
+      DockerReadyChecker.HttpResponseCode(9200, "/", Some("0.0.0.0")).within(10.minutes).looped(40, 1250.millis)
+    )
+  )
+
   private val expectedNumberOfImages = images.size
 
   private val oneHundredMilliseconds = Duration(100, MILLISECONDS)
   private val fiveSeconds = Duration(5, SECONDS)
 
   override def beforeAll {
+    super.beforeAll()
+
     ES.ensureAliasAssigned()
     purgeTestImages
 
     Await.ready(saveImages(images), 1.minute)
     // allow the cluster to distribute documents... eventual consistency!
     eventually(timeout(fiveSeconds), interval(oneHundredMilliseconds))(totalImages shouldBe expectedNumberOfImages)
-  }
-
-  override def afterAll  {
-    purgeTestImages
   }
 
   describe("Native elastic search sanity checks") {
