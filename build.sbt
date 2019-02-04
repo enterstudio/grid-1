@@ -90,7 +90,9 @@ lazy val mediaApi = playProject("media-api", 9001).settings(
     "org.apache.commons" % "commons-email" % "1.5",
     "org.parboiled" %% "parboiled" % "2.1.5",
     "org.http4s" %% "http4s-core" % "0.18.7",
-    "org.mockito" % "mockito-core" % "2.18.0"
+    "org.mockito" % "mockito-core" % "2.18.0",
+    "com.whisk" %% "docker-testkit-scalatest" % "0.9.8" % Test,
+    "com.whisk" %% "docker-testkit-impl-spotify" % "0.9.8" % Test
   )
 ).settings(testSettings)
 
@@ -99,7 +101,9 @@ lazy val metadataEditor = playProject("metadata-editor", 9007)
 lazy val thrall = playProject("thrall", 9002).settings(
   libraryDependencies ++= Seq(
     "org.codehaus.groovy" % "groovy-json" % "2.4.4",
-    "com.yakaz.elasticsearch.plugins" % "elasticsearch-action-updatebyquery" % "2.2.0"
+    "com.yakaz.elasticsearch.plugins" % "elasticsearch-action-updatebyquery" % "2.2.0",
+    "com.whisk" %% "docker-testkit-scalatest" % "0.9.8" % Test,
+    "com.whisk" %% "docker-testkit-impl-spotify" % "0.9.8" % Test
   )
 ).settings(testSettings)
 
