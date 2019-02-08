@@ -45,6 +45,10 @@ class LeaseNotifier(config: LeasesConfig, store: LeaseStore) extends SNS(config,
     publish(MediaLease.toJson(mediaLease), "add-image-lease")
   }
 
+  def sendAddLeases(mediaLeases: List[MediaLease], mediaId: String) = {
+    publish(LeaseNotice(mediaId, Json.toJson(LeasesByMedia.build(mediaLeases))).toJson, "replace-image-leases")
+  }
+
   def sendRemoveLease(mediaId: String, leaseId: String) = {
     val leaseInfo = Json.obj(
       "leaseId" -> leaseId,
